@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import SearchForm from './SearchForm'
 import GiphyGrid from './GiphyGrid'
+import {throttle} from 'lodash'
 import './App.css';
-import { __await } from 'tslib';
 
 const API_KEY = process.env.REACT_APP_SECRET_CODE
 
@@ -14,20 +14,23 @@ class App extends Component {
       giphy: [],
       isLoading: false,
       limit:25,
-      searchTerm: ''
+      searchTerm: '',
+      position: 3000
     }
     this.search = this.search.bind(this)
     this.onScroll = this.onScroll.bind(this)
   }
 
   async onScroll() {
-    let searchTerm = this.state.search
-    let counter = this.state.limit
-    if(this.myRef && this.myRef.current.scrollTop > 2000 && searchTerm) {
-      console.log(this.myRef)
-      await fetch(`https://api.giphy.com/v1/gifs/search?q=${searchTerm}&api_key=${API_KEY}&limit=${counter+25}`)
+    let searchTerm = this.state.searchTerm
+    let counter = this.state.limit + 25
+    let position = this.state.position
+    let giphy = this.state.giphy
+    if(this.myRef && this.myRef.current.scrollTop > position && searchTerm && giphy.length < 51) {
+      console.log(position)
+      await fetch(`https://api.giphy.com/v1/gifs/search?q=${searchTerm}&api_key=${API_KEY}&limit=${counter}`)
       .then(res => res.json())
-      .then(json => this.setState({giphy: json.data, limit: counter + 25}));
+      .then(json => this.setState({giphy: json.data, limit: counter + 25, position: position * 2}));
     }
   }
 
@@ -38,9 +41,10 @@ class App extends Component {
   }
 
   async search(gifSearch) {
+    console.log(API_KEY)
     await fetch(`https://api.giphy.com/v1/gifs/search?q=${gifSearch}&api_key=${API_KEY}&limit=25`)
     .then(res => res.json())
-    .then(json => this.setState({giphy: json.data, search: gifSearch}));
+    .then(json => this.setState({giphy: json.data, searchTerm: gifSearch}));
   }
 
   render() {
